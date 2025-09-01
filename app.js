@@ -21,6 +21,7 @@ const mongoDbUrl = process.env.MONGO_DB_URL;
 // console.log("process.env.MONGO_DB_URL ==>", process.env.MONGO_DB_URL)
 
 // .connect("mongodb://127.0.0.1:27017/mydatabase")
+// .connect(mongoDbUrl)
 mongoose
   .connect(mongoDbUrl)
   .then(() => {

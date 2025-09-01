@@ -1,86 +1,95 @@
 const User = require("../../../models/level1/auth/register");
-let phoneNumberState;
-let virfyCodeState;
-let passwordState;
-
 const registerStep1 = async (req, res, next) => {
-  if (req.body) {
+  try {
     const { phoneNumber } = req.body;
-    if (phoneNumber && phoneNumber !== "") {
-      const validationByPhoneNumber = await User.findOne({
-        phoneNumber: req.body.phoneNumber,
-      });
-      if (!validationByPhoneNumber) {
-        try {
-          phoneNumberState = phoneNumber;
-          res.status(201).json({ message: "عملیات  با موفقیت انجام شد" });
-        } catch (error) {
-          res.status(500).json({ message: "خطا در ثبت نام" });
-        }
-      } else {
-        res
-          .status(400)
-          .json({ message: "این کاربر با این شماره تلفن موجود میباشد!!!" });
-      }
-    } else {
-      res.status(400).json({
-        message: "فیلدها خالیه!!!",
-      });
+
+    if (!phoneNumber || phoneNumber === "") {
+      return res.status(400).json({ message: "فیلد شماره تلفن خالی است!" });
     }
-  } else {
-    res
-      .status(400)
-      .json({ message: "لطفا شماره همراه را با دقت وارد نمایید !!!" });
+
+    // بررسی اینکه کاربر با این شماره موجود نباشد
+    const existingUser = await User.findOne({ phoneNumber });
+    if (existingUser) {
+      return res.status(400).json({ message: "این کاربر با این شماره موجود است!" });
+    }
+
+    // ایجاد کاربر موقت با شماره تلفن
+    const tempUser = new User({ phoneNumber, password: "", temp: true });
+    await tempUser.save();
+
+    res.status(201).json({ message: "مرحله ۱ با موفقیت انجام شد", userId: tempUser._id });
+  } catch (error) {
+    console.log("registerStep1 error:", error);
+    res.status(500).json({ message: "خطا در ثبت شماره تلفن" });
   }
 };
 
-const registerStep2 = (req, res, next) => {
-  if (req.body) {
-    const { virfyCode } = req.body;
-    if (virfyCode && virfyCode !== "" && virfyCode === "1234") {
-      try {
-        virfyCodeState = virfyCode;
-        res.status(201).json({ message: "عملیات با موفقیت انجام شد" });
-      } catch (error) {
-        res.status(500).json({ message: "خطا سمت سرور !!!" });
-      }
-    } else {
-      res.status(400).json({ message: "لطفا فیلدها را با دقت پرکنید" });
+// مرحله 2: تایید کد
+const registerStep2 = async (req, res, next) => {
+  try {
+    const { userId, virfyCode } = req.body;
+
+    if (!userId || !virfyCode) {
+      return res.status(400).json({ message: "فیلدها خالی هستند!" });
     }
-  } else {
-    res.status(400).json({ message: "فیلدها خالی هستن !!!" });
+
+    if (virfyCode !== "1234") {
+      return res.status(400).json({ message: "کد تایید اشتباه است!" });
+    }
+
+    // بروزرسانی کاربر موقت (مثلا برای ثبت تایید شده بودن)
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "کاربر یافت نشد!" });
+    }
+
+    user.verified = true; // اضافه کردن فیلد تایید
+    await user.save();
+
+    res.status(201).json({ message: "مرحله ۲ با موفقیت انجام شد" });
+  } catch (error) {
+    console.log("registerStep2 error:", error);
+    res.status(500).json({ message: "خطا در تایید کد" });
   }
 };
 
+// مرحله 3: ثبت رمز عبور و تکمیل اطلاعات
 const registerStep3 = async (req, res, next) => {
   try {
-    if (req.body) {
-      const { password } = req.body;
-      console.log("password ==>", password);
-      if (password && password !== "") {
-        passwordState = password;
-        const userData = new User({
-          phoneNumber: phoneNumberState,
-          password: passwordState,
-          telegramLink: "",
-          linkedinLink: "",
-          prfileImage: "",
-          prfileImagesss: "",
-          complatedProfile: 5,
-          rool: "",
-        });
-        await userData.save();
-        res.status(200).json({ message: "ثبت نام با موفقیت انجام شد" });
-      } else {
-        res.status(400).json({ message: "لطفا فیلدها را با دقت پر کنید" });
-      }
-    } else {
-      res.json({ message: "فیلدها خالیست !!!" });
+    const { userId, password } = req.body;
+
+    if (!userId || !password) {
+      return res.status(400).json({ message: "فیلدها خالی هستند!" });
     }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "کاربر یافت نشد!" });
+    }
+
+    user.password = password;
+    user.temp = false; // کاربر موقت نیست
+    user.telegramLink = "";
+    user.linkedinLink = "";
+    user.prfileImage = "";
+    user.prfileImagesss = "";
+    user.complatedProfile = 5;
+    user.rool = "";
+
+    await user.save();
+
+    res.status(200).json({ message: "ثبت نام با موفقیت انجام شد" });
   } catch (error) {
-    res.status(500).json({ message: "خطا سمت سرور" });
+    console.log("registerStep3 error:", error);
+    res.status(500).json({ message: "خطا در ثبت رمز عبور" });
   }
 };
+
+// module.exports = {
+//   registerStep1,
+//   registerStep2,
+//   registerStep3,
+// };
 
 const getUserList = async (req, res, next) => {
   const userList = await User.find().exec();
