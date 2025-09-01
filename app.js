@@ -18,14 +18,14 @@ app.use("/api", courseGroupRouter)
 const port = process.env.PORT || 3000;
 const mongoDbUrl = process.env.MONGO_DB_URL;
 
-// console.log("process.env.MONGO_DB_URL ==>", process.env.MONGO_DB_URL)
+console.log("process.env.MONGO_DB_URL ==>", process.env.MONGO_DB_URL)
 
 // .connect("mongodb://127.0.0.1:27017/mydatabase")
 // .connect(mongoDbUrl)
 mongoose
-  .connect(mongoDbUrl)
+  .connect("mongodb://127.0.0.1:27017/mydatabase")
   .then(() => {
-    app.listen(port, (listen) => {
+    app.listen(8000, (listen) => {
       "listen ==>", listen;
     });
   })
