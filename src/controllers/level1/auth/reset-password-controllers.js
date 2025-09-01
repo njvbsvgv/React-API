@@ -1,4 +1,4 @@
-const Users = require("../../models/auth/register");
+const Users = require("../../../models/level1/auth/register");
 const forgetPasswordStep1 = (req, res, next) => {
   if (req.body) {
     const { email, baseUrl } = req.body;
@@ -28,7 +28,7 @@ const forgetPasswordStep2 = async (req, res, next) => {
         await Users.findByIdAndUpdate(userId, { password: resetPassword });
         res.status(200).json({ message: "پسوورد با موفقیت تغییر کرد" });
       } else {
-        req
+        res
           .status(401)
           .json({ message: "کاربر یافت نشد لطفا ابتدا ثبت نام بفرمایید" });
       }
