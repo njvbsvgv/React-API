@@ -36,7 +36,7 @@ const login = async (req, res, next) => {
             sessions[token] = { createdAt: Date.now() };
             res
               .status(200)
-              .json({ message: "به پنل خود خوش آمدید", token: token });
+              .json({ message: "به پنل خود خوش آمدید", token: token, data: findUser });
           }
         } else {
           res
