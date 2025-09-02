@@ -23,9 +23,9 @@ console.log("process.env.MONGO_DB_URL ==>", process.env.MONGO_DB_URI)
 // .connect("mongodb://127.0.0.1:27017/mydatabase")
 // .connect(mongoDbUrl)
 mongoose
-  .connect(mongoDbUrl)
+  .connect("mongodb://127.0.0.1:27017/myDataBase")
   .then(() => {
-    app.listen(port, (listen) => {
+    app.listen(8000, (listen) => {
       "listen ==>", listen;
     });
   })
